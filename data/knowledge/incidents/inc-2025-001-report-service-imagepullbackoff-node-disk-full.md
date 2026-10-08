@@ -10,7 +10,7 @@ This is a synthetic incident report created for development and evaluation. All 
 
 ## Impact
 
-During a routine release of `report-service` (version 2.14.0), the new pods scheduled to worker node `node-a3` in `cluster-a` could not start and stayed in `ImagePullBackOff`. The rollout stalled at 2 of 4 updated replicas for about 62 minutes (09:08 to 10:10). The two old replicas kept serving, so end users saw no errors, but the scheduled report generation ran at reduced capacity. Daily finance reports were delivered about 60 minutes late. No data was lost.
+During a routine release of `report-service` (version 2.14.0), the new pods scheduled to worker node `node-a3` in `cluster-a` could not start and stayed in `ImagePullBackOff`. The rollout stalled at 2 of 4 updated replicas for about 62 minutes (09:08 to 10:10). Four replicas stayed ready throughout (two on the old version and two on the new version), so end users saw no errors. However, the rollout was incomplete when the daily finance report run started at 09:30, so the run executed on a mixed-version fleet, failed validation on the two old replicas, and was repeated after the rollout completed. The daily finance reports were delivered about 60 minutes late. No data was lost.
 
 The release was blocked and a second, unrelated hotfix for the same service had to wait until the rollout completed.
 
@@ -18,7 +18,7 @@ The release was blocked and a second, unrelated hotfix for the same service had 
 
 All times are UTC.
 
-- **09:05** The release pipeline deploys `report-service:2.14.0`. The rollout starts.
+- **09:05** The release pipeline deploys `report-service:2.14.0`. The Deployment has 4 replicas and uses the `RollingUpdate` strategy with `maxSurge: 50%` and `maxUnavailable: 0`, so up to 6 pods can exist during the rollout. The rollout starts.
 - **09:08** Two new pods start normally on `node-a1` and `node-a2`. Two new pods scheduled to `node-a3` show `ErrImagePull`, then `ImagePullBackOff`.
 - **09:12** The deployment alert "rollout not progressing" fires. The on-call engineer opens the incident.
 - **09:15** The on-call engineer suspects a registry or credential problem, since `ImagePullBackOff` is the typical symptom. The image tag `2.14.0` is confirmed to exist in `registry.example.com`, and pods on the other two nodes pulled it successfully, which rules out a wrong tag and expired pull credentials.
@@ -29,7 +29,8 @@ All times are UTC.
 - **09:55** The on-call engineer compresses and moves the archived logs to object storage after confirming with the service owner that they are not needed locally, then removes unused container images with `crictl rmi --prune`. Disk usage drops to 54%.
 - **10:02** `DiskPressure` clears. The node is uncordoned.
 - **10:05** The two stuck pods pull the image, start, and become ready. The rollout completes at **10:10**.
-- **10:30** Delayed report jobs finish. The incident is marked resolved after monitoring stays normal for 30 minutes.
+- **10:30** The repeated finance report run finishes.
+- **10:40** The incident is marked resolved after monitoring stays normal for 30 minutes following the rollout completion at 10:10.
 
 ## Root cause
 
