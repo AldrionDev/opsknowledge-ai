@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -272,6 +273,27 @@ def test_rejects_symlinked_document_directory(tmp_path: Path, category: str) -> 
 
     with pytest.raises(DocumentLoadError, match=category):
         load_knowledge_documents(corpus)
+
+
+def test_reports_nested_directory_scan_errors(
+    corpus: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    write(corpus, "runbooks/a.md", "# A\n")
+    write(corpus, "runbooks/nested/b.md", "# B\n")
+    original_scandir = os.scandir
+
+    def scandir(path: str | os.PathLike[str] | None = None):  # type: ignore[no-untyped-def]
+        if Path(str(path)).name == "nested":
+            raise PermissionError(13, "denied", str(path))
+        return original_scandir(path)
+
+    monkeypatch.setattr(os, "scandir", scandir)
+
+    with pytest.raises(DocumentLoadError, match=r"runbooks/nested") as exc_info:
+        load_knowledge_documents(corpus)
+
+    assert str(corpus) not in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, PermissionError)
 
 
 def test_returns_empty_list_for_empty_document_directories(corpus: Path) -> None:

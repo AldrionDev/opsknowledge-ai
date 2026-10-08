@@ -50,6 +50,10 @@ def load_knowledge_documents(corpus_root: Path) -> list[KnowledgeDocument]:
     if not corpus_root.is_dir():
         raise DocumentLoadError(f"Corpus root is not a directory: {corpus_root}")
 
+    def raise_scan_error(error: OSError) -> None:
+        location = _relative_location(error, corpus_root)
+        raise DocumentLoadError(f"Directory cannot be scanned: {location}") from error
+
     files: list[tuple[str, Path, DocumentType]] = []
     for directory_name, document_type in DOCUMENT_DIRECTORIES.items():
         directory = corpus_root / directory_name
@@ -59,19 +63,31 @@ def load_knowledge_documents(corpus_root: Path) -> list[KnowledgeDocument]:
             )
         if not directory.is_dir():
             raise DocumentLoadError(f"Missing document directory: {directory_name}/")
-        for path in directory.rglob("*"):
-            if (
-                path.suffix == MARKDOWN_SUFFIX
-                and path.is_file()
-                and not path.is_symlink()
-            ):
-                source_path = path.relative_to(corpus_root).as_posix()
-                files.append((source_path, path, document_type))
+
+        for dirpath, _, filenames in directory.walk(
+            on_error=raise_scan_error, follow_symlinks=False
+        ):
+            for filename in filenames:
+                path = dirpath / filename
+                if (
+                    path.suffix == MARKDOWN_SUFFIX
+                    and path.is_file()
+                    and not path.is_symlink()
+                ):
+                    source_path = path.relative_to(corpus_root).as_posix()
+                    files.append((source_path, path, document_type))
 
     return [
         _load_document(source_path, path, document_type)
         for source_path, path, document_type in sorted(files, key=lambda f: f[0])
     ]
+
+
+def _relative_location(error: OSError, corpus_root: Path) -> str:
+    try:
+        return Path(str(error.filename)).relative_to(corpus_root).as_posix()
+    except ValueError:
+        return "(unknown location)"
 
 
 def _load_document(
