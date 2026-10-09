@@ -1,0 +1,23 @@
+name: opsknowledge-ai
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg17-trixie
+    environment:
+      # Development-only credentials. They must match DATABASE_URL in .env.example.
+      POSTGRES_USER: opsknowledge
+      POSTGRES_PASSWORD: opsknowledge_dev
+      POSTGRES_DB: opsknowledge
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - opsknowledge_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opsknowledge -d opsknowledge"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  opsknowledge_pgdata:
