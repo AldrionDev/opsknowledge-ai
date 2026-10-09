@@ -17,7 +17,8 @@ needs no API key and no cloud account.
 | Language | English |
 
 The model name and dimension are constants in `fastembed_service.py` and are
-covered by tests. No query instruction prefix is added; for this model version it
+covered by tests. The database column dimension must match; see
+[database.md](database.md#embedding-dimension). No query instruction prefix is added; for this model version it
 is optional, and FastEmbed does not add one.
 
 ## Model artifact, revision and licensing
