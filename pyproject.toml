@@ -5,8 +5,12 @@ description = "Enterprise RAG knowledge assistant for technical documentation, r
 readme = "README.md"
 requires-python = ">=3.12, <3.13"
 dependencies = [
+    "alembic>=1.20.0",
     "fastapi>=0.142.4",
     "fastembed>=0.9.0",
+    "pgvector>=0.5.1",
+    "psycopg[binary]>=3.3.6",
+    "sqlalchemy>=2.1.4",
     "uvicorn>=0.54.0",
 ]
 
