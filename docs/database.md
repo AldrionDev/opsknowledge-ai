@@ -3,8 +3,8 @@
 PostgreSQL with the [pgvector](https://github.com/pgvector/pgvector) extension
 stores document chunks, their source metadata and their embeddings. This
 document covers the database foundation: local environment, configuration,
-schema and migrations. Persistence operations (store, read, replace, delete) are
-not part of it.
+schema and migrations, and the chunk repository that stores, reads, replaces and
+removes chunks.
 
 ## Components
 
@@ -16,6 +16,8 @@ not part of it.
 | `app/db/session.py` | `create_db_engine`, `create_session_factory`, `session_scope` |
 | `app/db/models.py` | SQLAlchemy base and `DocumentChunkRecord` |
 | `app/db/verification.py` | `verify_embedding_dimension` |
+| `app/ingestion/chunk_repository.py` | `ChunkRepository` contract and `StoredChunk` |
+| `app/db/chunk_repository.py` | `SqlAlchemyChunkRepository`, the PostgreSQL implementation |
 | `alembic.ini`, `migrations/` | Alembic configuration and migrations |
 
 Engines and sessions are created explicitly; nothing connects at import time.
@@ -88,6 +90,38 @@ To change the dimension (for example with another embedding model):
 2. update `EMBEDDING_DIMENSION`;
 3. re-embed and re-store all chunks, because vectors of different models or
    dimensions are not comparable.
+
+## Chunk repository
+
+Application code depends on the `ChunkRepository` protocol
+(`app/ingestion/chunk_repository.py`), which exposes no SQLAlchemy types.
+`SqlAlchemyChunkRepository(create_session_factory(engine))` implements it.
+
+| Operation | Behavior |
+|---|---|
+| `add_chunks(chunks, embeddings)` | Stores new chunks; `embeddings[i]` belongs to `chunks[i]`. Existing `chunk_id` or `(document_id, chunk_index)` is an error. |
+| `get_chunk(chunk_id)` | Returns a `StoredChunk` (`DocumentChunk` plus `embedding: list[float]`), or `None` if unknown. |
+| `replace_document_chunks(document_id, chunks, embeddings)` | Deletes all chunks of the document and stores the new set in one transaction. |
+| `delete_document_chunks(document_id)` | Removes all chunks of the document; an unknown document is a no-op. |
+
+- Every operation is one transaction. A batch is written with one `INSERT`
+  execution instead of one statement per chunk; SQLAlchemy may split a very
+  large batch into several statements inside the same transaction. A failed
+  replacement rolls back completely: the previous chunks stay, no new chunk is
+  left behind, and other documents are never touched.
+- Replacing a document repeatedly with the same chunks is idempotent.
+  `replace_document_chunks(document_id, [], [])` is equivalent to
+  `delete_document_chunks(document_id)`.
+- A chunk/embedding count mismatch, an embedding that does not have
+  `EMBEDDING_DIMENSION` elements, or (on replace) a chunk of another document
+  raises `ValueError` before the database is accessed. These checks are the
+  contract's own `require_embeddings` and `require_chunks_of_document`, so every
+  implementation reports them identically; the expected dimension is passed in
+  by the implementation.
+- Database errors (for example `IntegrityError`) are not wrapped; they
+  propagate to the caller. Concurrent replacements of the same document are not
+  serialized: one of them may fail with an `IntegrityError`.
+- Similarity search is not part of the repository.
 
 ## Migrations
 
