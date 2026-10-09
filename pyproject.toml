@@ -29,6 +29,11 @@ target-version = "py312"
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501"]  # formatter may preserve long string literals
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires PostgreSQL + pgvector (TEST_DATABASE_URL)",
+]
+
 [tool.mypy]
 python_version = "3.12"
 files = ["app"]
