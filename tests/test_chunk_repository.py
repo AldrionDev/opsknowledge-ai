@@ -9,6 +9,7 @@ from app.ingestion.chunk_repository import (
     ChunkRepository,
     require_chunks_of_document,
     require_embeddings,
+    require_search_arguments,
 )
 from app.ingestion.models import DocumentChunk, DocumentType
 
@@ -98,6 +99,32 @@ def test_add_of_nothing_does_not_access_the_database(
     repository: ChunkRepository,
 ) -> None:
     repository.add_chunks([], [])
+
+
+def test_search_rejects_embedding_with_wrong_dimension(
+    repository: ChunkRepository,
+) -> None:
+    with pytest.raises(ValueError, match="query_embedding has 3 dimensions"):
+        repository.search_similar(make_embedding(3), 5)
+
+
+@pytest.mark.parametrize("limit", [0, -1])
+def test_search_rejects_non_positive_limit(
+    repository: ChunkRepository, limit: int
+) -> None:
+    with pytest.raises(ValueError, match="limit must be at least 1"):
+        repository.search_similar(make_embedding(), limit)
+
+
+def test_require_search_arguments_accepts_valid_arguments() -> None:
+    require_search_arguments(make_embedding(), 1, EMBEDDING_DIMENSION)
+
+
+def test_require_search_arguments_checks_against_the_given_dimension() -> None:
+    require_search_arguments(make_embedding(3), 5, 3)
+
+    with pytest.raises(ValueError, match="expected 3"):
+        require_search_arguments(make_embedding(), 5, 3)
 
 
 def test_require_embeddings_accepts_one_embedding_per_chunk() -> None:

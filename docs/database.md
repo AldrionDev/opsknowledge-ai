@@ -62,8 +62,8 @@ Table `document_chunks`, created by migration `0001`. It mirrors
 | `embedding` | `vector(384)` | Not null |
 
 `UNIQUE (document_id, chunk_index)` also serves lookups by `document_id`, so
-there is no separate index. There is no vector index yet; similarity search and
-its index tuning belong to the retrieval work.
+there is no separate index. There is no vector index: similarity search is an
+exact scan.
 
 pgvector stores `float32`; vectors read back can differ slightly from the
 Python `float` values that were written.
@@ -103,6 +103,7 @@ Application code depends on the `ChunkRepository` protocol
 | `get_chunk(chunk_id)` | Returns a `StoredChunk` (`DocumentChunk` plus `embedding: list[float]`), or `None` if unknown. |
 | `replace_document_chunks(document_id, chunks, embeddings)` | Deletes all chunks of the document and stores the new set in one transaction. |
 | `delete_document_chunks(document_id)` | Removes all chunks of the document; an unknown document is a no-op. |
+| `search_similar(query_embedding, limit)` | Returns at most `limit` `ChunkMatch` (`DocumentChunk` plus raw `cosine_distance`), ordered by cosine distance, then `chunk_id`. Read-only; an empty store returns `[]`. |
 
 - Every operation is one transaction. A batch is written with one `INSERT`
   execution instead of one statement per chunk; SQLAlchemy may split a very
@@ -113,15 +114,15 @@ Application code depends on the `ChunkRepository` protocol
   `replace_document_chunks(document_id, [], [])` is equivalent to
   `delete_document_chunks(document_id)`.
 - A chunk/embedding count mismatch, an embedding that does not have
-  `EMBEDDING_DIMENSION` elements, or (on replace) a chunk of another document
+  `EMBEDDING_DIMENSION` elements, (on replace) a chunk of another document, or
+  (on search) a query embedding of the wrong dimension or a `limit` below 1
   raises `ValueError` before the database is accessed. These checks are the
-  contract's own `require_embeddings` and `require_chunks_of_document`, so every
-  implementation reports them identically; the expected dimension is passed in
-  by the implementation.
+  contract's own `require_embeddings`, `require_chunks_of_document` and
+  `require_search_arguments`, so every implementation reports them identically;
+  the expected dimension is passed in by the implementation.
 - Database errors (for example `IntegrityError`) are not wrapped; they
   propagate to the caller. Concurrent replacements of the same document are not
   serialized: one of them may fail with an `IntegrityError`.
-- Similarity search is not part of the repository.
 
 ## Migrations
 

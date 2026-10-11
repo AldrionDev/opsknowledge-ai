@@ -1,10 +1,13 @@
+import math
 from collections.abc import Sequence
 
 from app.ingestion.chunk_repository import (
+    ChunkMatch,
     ChunkRepository,
     StoredChunk,
     require_chunks_of_document,
     require_embeddings,
+    require_search_arguments,
 )
 from app.ingestion.models import DocumentChunk
 
@@ -57,6 +60,19 @@ class InMemoryChunkRepository(ChunkRepository):
             if stored.chunk.document_id != document_id
         }
 
+    def search_similar(
+        self, query_embedding: Sequence[float], limit: int
+    ) -> list[ChunkMatch]:
+        require_search_arguments(query_embedding, limit, self._dimension)
+        matches = [
+            ChunkMatch(
+                stored.chunk, _cosine_distance(query_embedding, stored.embedding)
+            )
+            for stored in self._chunks.values()
+        ]
+        matches.sort(key=lambda match: (match.cosine_distance, match.chunk.chunk_id))
+        return matches[:limit]
+
     def _require_free_positions(self, chunks: Sequence[DocumentChunk]) -> None:
         chunk_ids = set(self._chunks)
         positions = {
@@ -84,3 +100,9 @@ class InMemoryChunkRepository(ChunkRepository):
             self._chunks.values(),
             key=lambda stored: (stored.chunk.source_path, stored.chunk.chunk_index),
         )
+
+
+def _cosine_distance(left: Sequence[float], right: Sequence[float]) -> float:
+    dot = sum(a * b for a, b in zip(left, right, strict=True))
+    norms = math.sqrt(sum(a * a for a in left)) * math.sqrt(sum(b * b for b in right))
+    return 1.0 - dot / norms
