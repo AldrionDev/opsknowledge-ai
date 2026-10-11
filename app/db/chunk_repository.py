@@ -5,6 +5,10 @@ failure rolls everything back. A batch is written with one `INSERT` execution
 instead of one statement per chunk; SQLAlchemy may still split a very large
 batch into several statements, which stay inside the same transaction.
 
+`search_similar` is an exact pgvector cosine-distance scan (`<=>`) ordered by
+distance and then `chunk_id`; the embedding column is not loaded. There is no
+vector index.
+
 `ChunkRepository` is subclassed explicitly so that mypy checks every method
 signature against the contract, and `_CONTRACT` below makes it reject a missing
 method too. The protocol is not `runtime_checkable` and no isinstance check is
@@ -13,16 +17,18 @@ performed anywhere.
 
 from collections.abc import Sequence
 
-from sqlalchemy import delete, insert
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import delete, insert, select
+from sqlalchemy.orm import Session, defer, sessionmaker
 
 from app.db.models import EMBEDDING_DIMENSION, DocumentChunkRecord
 from app.db.session import session_scope
 from app.ingestion.chunk_repository import (
+    ChunkMatch,
     ChunkRepository,
     StoredChunk,
     require_chunks_of_document,
     require_embeddings,
+    require_search_arguments,
 )
 from app.ingestion.models import DocumentChunk, DocumentType
 
@@ -74,6 +80,30 @@ class SqlAlchemyChunkRepository(ChunkRepository):
                 )
             )
 
+    def search_similar(
+        self, query_embedding: Sequence[float], limit: int
+    ) -> list[ChunkMatch]:
+        require_search_arguments(query_embedding, limit, EMBEDDING_DIMENSION)
+        distance = DocumentChunkRecord.embedding.cosine_distance(
+            list(query_embedding)
+        ).label("cosine_distance")
+        statement = (
+            select(DocumentChunkRecord, distance)
+            .options(defer(DocumentChunkRecord.embedding))
+            .order_by(distance, DocumentChunkRecord.chunk_id)
+            .limit(limit)
+        )
+        with session_scope(self._session_factory) as session:
+            rows = session.execute(statement).all()
+            # Converted inside the session: the records are detached afterwards
+            # and `embedding` is deferred, so reading it later would fail.
+            return [
+                ChunkMatch(
+                    chunk=_to_document_chunk(record), cosine_distance=float(value)
+                )
+                for record, value in rows
+            ]
+
 
 # Static assertion only: binding the class to `type[ChunkRepository]` makes mypy
 # fail if the adapter stops satisfying the contract, for example by dropping or
@@ -98,16 +128,20 @@ def _build_rows(
     ]
 
 
+def _to_document_chunk(record: DocumentChunkRecord) -> DocumentChunk:
+    return DocumentChunk(
+        chunk_id=record.chunk_id,
+        document_id=record.document_id,
+        chunk_index=record.chunk_index,
+        source_path=record.source_path,
+        document_type=DocumentType(record.document_type),
+        content=record.content,
+    )
+
+
 def _to_stored_chunk(record: DocumentChunkRecord) -> StoredChunk:
     return StoredChunk(
-        chunk=DocumentChunk(
-            chunk_id=record.chunk_id,
-            document_id=record.document_id,
-            chunk_index=record.chunk_index,
-            source_path=record.source_path,
-            document_type=DocumentType(record.document_type),
-            content=record.content,
-        ),
+        chunk=_to_document_chunk(record),
         # pgvector returns a numpy array; hand plain floats to the application.
         embedding=[float(value) for value in record.embedding],
     )

@@ -20,6 +20,13 @@ Contract of every implementation:
   leaves the same state. An empty set removes the document's chunks, exactly
   like `delete_document_chunks`. Chunks of other documents are never touched.
 - `get_chunk` returns `None` for an unknown `chunk_id`.
+- `search_similar` is a read-only cosine-distance search. It returns at most
+  `limit` matches ordered by `cosine_distance` ascending and then by `chunk_id`
+  ascending, so equal distances have a deterministic order. An empty store
+  yields `[]`. A query embedding of the wrong dimension or a `limit` below 1 is
+  rejected with `ValueError` before the store is accessed
+  (`require_search_arguments`). The result carries the raw distance, never an
+  application score; the meaning of a similarity score is defined by the caller.
 - Database failures are not swallowed; they propagate to the caller.
 """
 
@@ -36,6 +43,18 @@ class StoredChunk:
 
     chunk: DocumentChunk
     embedding: list[float]
+
+
+@dataclass(frozen=True)
+class ChunkMatch:
+    """A chunk found by a similarity search, without its embedding.
+
+    `cosine_distance` is the raw cosine distance between the query embedding and
+    the chunk embedding: 0 means the same direction, 1 orthogonal, 2 opposite.
+    """
+
+    chunk: DocumentChunk
+    cosine_distance: float
 
 
 class ChunkRepository(Protocol):
@@ -62,6 +81,15 @@ class ChunkRepository(Protocol):
         """Remove all stored chunks of one document; unknown documents are a no-op."""
         ...
 
+    def search_similar(
+        self, query_embedding: Sequence[float], limit: int
+    ) -> list[ChunkMatch]:
+        """Return at most `limit` chunks nearest to `query_embedding`.
+
+        Ordered by cosine distance ascending, then by `chunk_id` ascending.
+        """
+        ...
+
 
 def require_embeddings(
     chunks: Sequence[DocumentChunk],
@@ -85,6 +113,23 @@ def require_embeddings(
                 f"embeddings[{index}] has {len(embedding)} dimensions, "
                 f"expected {dimension}"
             )
+
+
+def require_search_arguments(
+    query_embedding: Sequence[float], limit: int, dimension: int
+) -> None:
+    """Raise `ValueError` unless `query_embedding` has exactly `dimension`
+    elements and `limit` is at least 1.
+
+    `dimension` is supplied by the implementation, like for `require_embeddings`.
+    """
+    if len(query_embedding) != dimension:
+        raise ValueError(
+            f"query_embedding has {len(query_embedding)} dimensions, "
+            f"expected {dimension}"
+        )
+    if limit < 1:
+        raise ValueError(f"limit must be at least 1, got {limit}")
 
 
 def require_chunks_of_document(

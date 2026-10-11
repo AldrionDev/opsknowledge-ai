@@ -82,3 +82,40 @@ def test_rejects_a_position_repeated_inside_the_batch(
         repository.add_chunks(batch, [EMBEDDING, EMBEDDING])
 
     assert repository.all_chunks() == before
+
+
+def test_search_orders_by_distance_then_chunk_id_and_applies_the_limit() -> None:
+    repository = InMemoryChunkRepository(dimension=2)
+    repository.add_chunks(
+        [
+            make_chunk("c", 0),
+            make_chunk("b", 1),
+            make_chunk("a", 2),
+            make_chunk("far", 3),
+        ],
+        [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0], [0.0, 1.0]],
+    )
+
+    matches = repository.search_similar([1.0, 0.0], 4)
+
+    assert [match.chunk.chunk_id for match in matches] == ["a", "b", "c", "far"]
+    assert [match.cosine_distance for match in matches] == pytest.approx(
+        [0.0, 0.0, 0.0, 1.0]
+    )
+    assert [m.chunk.chunk_id for m in repository.search_similar([1.0, 0.0], 2)] == [
+        "a",
+        "b",
+    ]
+
+
+def test_search_of_an_empty_repository_returns_nothing() -> None:
+    assert InMemoryChunkRepository(dimension=2).search_similar([1.0, 0.0], 5) == []
+
+
+def test_search_rejects_the_arguments_the_contract_rejects() -> None:
+    repository = InMemoryChunkRepository(dimension=2)
+
+    with pytest.raises(ValueError, match="query_embedding has 3 dimensions"):
+        repository.search_similar([1.0, 0.0, 0.0], 5)
+    with pytest.raises(ValueError, match="limit must be at least 1"):
+        repository.search_similar([1.0, 0.0], 0)
