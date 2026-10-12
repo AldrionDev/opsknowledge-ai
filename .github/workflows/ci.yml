@@ -24,4 +24,47 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy app
-      - run: uv run pytest
+      # No database in this job: the unit and API tests must not need one.
+      - run: uv run pytest -m "not integration"
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        # Same image as compose.yaml, so CI and local development run the same
+        # PostgreSQL + pgvector version.
+        image: pgvector/pgvector:0.8.7-pg17-trixie
+        env:
+          # Throwaway CI credentials; the service exists only for this job run.
+          # They are not secrets and must never be used outside CI.
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci_not_a_secret
+          POSTGRES_DB: opsknowledge_ci
+        ports:
+          - 5432:5432
+        # The image declares no HEALTHCHECK, so the health check is defined here.
+        options: >-
+          --health-cmd "pg_isready -U ci -d opsknowledge_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          version: "0.12.23"
+      - run: uv sync --locked
+      - name: Apply migrations to the CI database
+        run: uv run alembic upgrade head
+        env:
+          DATABASE_URL: postgresql+psycopg://ci:ci_not_a_secret@localhost:5432/opsknowledge_ci
+      - name: Database integration tests
+        # REQUIRE_INTEGRATION_DB turns a missing database configuration into a
+        # failure, so this step cannot pass with every integration test skipped.
+        run: uv run pytest -m integration -rs
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://ci:ci_not_a_secret@localhost:5432/postgres
+          REQUIRE_INTEGRATION_DB: "1"
