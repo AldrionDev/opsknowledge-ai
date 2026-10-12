@@ -65,7 +65,7 @@ Incident reports start with a list of fields (`Incident ID`, `Affected service`,
 
 ## Intended topical overlap
 
-The documents deliberately share topics and vocabulary so that they can be used later to check retrieval behavior. This overlap is intended for future retrieval verification. It is described here for reference and does not mean that any retrieval or evaluation functionality exists yet.
+The documents deliberately share topics and vocabulary so that they can be used to check retrieval behavior. Semantic retrieval over this corpus is available (see the [project README](../../README.md)), but there is no retrieval evaluation or benchmark yet. This overlap is described here for reference and for future retrieval verification.
 
 - **Related runbook and incident:** each runbook has at least one incident report on the same topic.
 - **Same symptom, different root cause:**
