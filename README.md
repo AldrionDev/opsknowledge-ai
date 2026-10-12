@@ -146,7 +146,9 @@ Ingestion is a local command. The API has no ingestion endpoint.
 uv run --env-file .env uvicorn app.main:app --reload
 ```
 
-The API is served at <http://127.0.0.1:8000>.
+The API is served at <http://127.0.0.1:8000>. The server runs in the foreground:
+run the search requests below in a second terminal, and stop the server with
+`Ctrl+C`.
 
 `--env-file .env` supplies `DATABASE_URL`, which `POST /search` needs. The plain
 development command `uv run uvicorn app.main:app --reload` starts the same
