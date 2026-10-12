@@ -142,8 +142,9 @@ Which tests run depends on the environment, not on the command:
 
 | Environment | `uv run pytest` |
 |---|---|
-| `TEST_DATABASE_URL` not set (default, CI) | Unit tests run; integration tests are **skipped** |
+| `TEST_DATABASE_URL` not set (default) | Unit tests run; integration tests are **skipped** |
 | `TEST_DATABASE_URL` set (for example via `UV_ENV_FILE=.env`) | Unit and integration tests run; the database must be up, otherwise the integration tests error |
+| `REQUIRE_INTEGRATION_DB=1` (CI only) | A missing `TEST_DATABASE_URL` **fails** every integration test instead of skipping it |
 
 Use markers to be explicit, regardless of the environment:
 
@@ -175,7 +176,46 @@ Database safety:
   `TEST_DATABASE_URL` and `DATABASE_URL` name the same database (compared by
   database name only, and only if `DATABASE_URL` is set). This check does not
   replace the name check.
+- Both decisions live in `tests/integration/database_requirement.py`
+  (`require_admin_url()`), which the `admin_url` fixture calls.
 
 A run only counts as having verified the database when it reports zero skipped
 tests; with `TEST_DATABASE_URL` unset the integration tests are skipped, not
-passed. GitHub Actions does not run them yet.
+passed.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` has two jobs:
+
+| Job | Database | Runs |
+|---|---|---|
+| `checks` | none | `ruff check`, `ruff format --check`, `mypy app`, `pytest -m "not integration"` |
+| `integration` | `pgvector/pgvector:0.8.7-pg17-trixie` service container | `alembic upgrade head`, then `pytest -m integration -rs` |
+
+- `checks` runs without a database, which is what keeps the unit and API tests
+  independent of PostgreSQL.
+- The service container uses the same pgvector image as `compose.yaml`, with
+  throwaway CI credentials written directly in the workflow. No repository
+  secret, cloud database or external service is involved, and the service only
+  lives for the duration of the job.
+- The connection string is set on the two steps that need it: `DATABASE_URL`
+  for the migration step, `TEST_DATABASE_URL` for the test step. The migration
+  step applies the real migrations to the service database
+  (`opsknowledge_ci`); the tests use the `postgres` maintenance database as
+  their administrative connection and create their own temporary databases, as
+  they do locally.
+- The test step also sets `REQUIRE_INTEGRATION_DB=1`. Without a usable
+  `TEST_DATABASE_URL` the integration tests then fail instead of skipping, so
+  the integration job cannot report success without having executed them. The
+  guarantee rests on every integration test reaching the shared `admin_url`
+  fixture (through `temp_database_url` and `migrated_engine`), which is how
+  they all obtain a database; a future integration test that bypassed those
+  fixtures would be outside it. Any value other than `0`, `false` or an empty
+  string requires the database. If the marker ever stopped selecting tests,
+  `pytest` would exit with its "no tests ran" status and fail the step as well.
+
+Simulate the CI behavior locally:
+
+```bash
+TEST_DATABASE_URL= REQUIRE_INTEGRATION_DB=1 uv run pytest -m integration
+```

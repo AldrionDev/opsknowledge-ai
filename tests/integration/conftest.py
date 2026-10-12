@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from sqlalchemy import Engine, create_engine
 from sqlalchemy.engine import make_url
 
 from app.db.session import create_db_engine
+from tests.integration.database_requirement import require_admin_url
 from tests.integration.temp_database import (
     create_database,
     drop_database,
@@ -20,21 +20,13 @@ ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 
 @pytest.fixture
 def admin_url() -> str:
-    """Server URL used only to create and drop disposable databases."""
-    url = os.environ.get("TEST_DATABASE_URL", "").strip()
-    if not url:
-        pytest.skip(
-            "TEST_DATABASE_URL is not set; PostgreSQL integration tests were NOT executed"
-        )
+    """Server URL used only to create and drop disposable databases.
 
-    developer_url = os.environ.get("DATABASE_URL", "").strip()
-    if developer_url:
-        if make_url(url).database == make_url(developer_url).database:
-            pytest.fail(
-                "TEST_DATABASE_URL must not point to the same database as DATABASE_URL",
-                pytrace=False,
-            )
-    return url
+    Every integration test reaches this fixture through `temp_database_url`, so
+    `require_admin_url()` decides for all of them whether the run skips or
+    fails when no integration database is configured.
+    """
+    return require_admin_url()
 
 
 @pytest.fixture
