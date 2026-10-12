@@ -21,7 +21,9 @@ removes chunks.
 | `alembic.ini`, `migrations/` | Alembic configuration and migrations |
 
 Engines and sessions are created explicitly; nothing connects at import time.
-The API (`/health` included) does not need a database.
+`/health`, `/docs` and `/openapi.json` need no database. The API creates its
+engine on the first request that searches the stored chunks (`POST /search`) and
+disposes it on application shutdown (`app/api/dependencies.py`).
 
 ## Local workflow
 
