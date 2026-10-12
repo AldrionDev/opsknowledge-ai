@@ -87,16 +87,8 @@ uv run --env-file .env alembic upgrade head
 ```
 
 Alembic migrations are the only supported way to create or update the schema.
-
-Stop the database:
-
-```bash
-docker compose down
-```
-
-The data is kept in a Docker volume and survives `docker compose down`. See
-[docs/database.md](docs/database.md) for the schema, the repository and details
-of the local database workflow.
+See [docs/database.md](docs/database.md) for the schema, the repository and
+details of the local database workflow.
 
 ## Knowledge corpus
 
@@ -256,6 +248,17 @@ The tests run in temporary databases of their own and do not modify the
 development database. Skipped integration tests mean the database was not
 exercised, so check the report for skips. See
 [docs/database.md](docs/database.md#tests) for how the tests are isolated.
+
+## Stopping the database
+
+Optional final step, once you are done with the workflow above:
+
+```bash
+docker compose down
+```
+
+The data is kept in a Docker volume and survives `docker compose down`; the next
+`docker compose up -d --wait` starts the database with the same data.
 
 ## Code quality
 
