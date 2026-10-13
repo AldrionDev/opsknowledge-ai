@@ -33,8 +33,10 @@ implemented. See [Development status](#development-status) for details.
 The project is pinned to Python 3.12 through `.python-version`. uv uses the
 required Python version for the project environment.
 
-No cloud account or API key is required. Embeddings are computed locally on
-the CPU.
+No cloud account or API key is required for ingestion, retrieval and
+`POST /search`. Embeddings are computed locally on the CPU. An Anthropic API key
+is needed only by LLM features that use the chat model factory
+(`app/llm/`).
 
 ## Local setup
 
@@ -56,14 +58,21 @@ required.
 cp .env.example .env
 ```
 
-| Variable            | Required for                                                      |
-| ------------------- | ----------------------------------------------------------------- |
-| `DATABASE_URL`      | Migrations, ingestion and `POST /search`                          |
-| `TEST_DATABASE_URL` | Database integration tests only ([Running tests](#running-tests)) |
+| Variable                | Required for                                                      |
+| ----------------------- | ----------------------------------------------------------------- |
+| `DATABASE_URL`          | Migrations, ingestion and `POST /search`                          |
+| `TEST_DATABASE_URL`     | Database integration tests only ([Running tests](#running-tests)) |
+| `ANTHROPIC_API_KEY`     | LLM features only; read when the chat model is created            |
+| `LLM_MODEL`             | Optional, default `claude-haiku-5-5`                              |
+| `LLM_TIMEOUT_SECONDS`   | Optional, default `60`; must be positive                          |
+| `LLM_MAX_OUTPUT_TOKENS` | Optional, default `1024`; must be a positive integer              |
+| `LLM_MAX_RETRIES`       | Optional, default `2`; must be a non-negative integer             |
 
 `.env.example` contains development-only values that match the database
-credentials in `compose.yaml`; no edit is needed for the local setup. `.env` is
-ignored by Git. Never commit real credentials or secrets.
+credentials in `compose.yaml`; no edit is needed for the local setup. Its
+`ANTHROPIC_API_KEY` is a placeholder: set a real key only in your local `.env`.
+`.env` is ignored by Git. Never commit real credentials or secrets. No sampling
+parameters (`temperature`, `top_p`, `top_k`) are configured.
 
 `.env` is not loaded automatically. The commands below that need the database
 pass it explicitly with `uv run --env-file .env`.
@@ -285,6 +294,7 @@ pgvector service container. See
 │   ├── api/                 # POST /search endpoint and dependency wiring
 │   ├── ingestion/           # Document loading, chunking and ingestion CLI
 │   ├── embeddings/          # Local embedding service (FastEmbed)
+│   ├── llm/                 # LLM configuration, chat model factory, errors
 │   ├── db/                  # PostgreSQL + pgvector persistence
 │   └── retrieval/           # Semantic retrieval service
 ├── data/
