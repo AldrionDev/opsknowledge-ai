@@ -232,6 +232,21 @@ HTTP 422. If the database is not configured, not reachable or not migrated, the
 API responds with HTTP 500 and a generic error body. The first search request
 after startup is slower because it loads the embedding model.
 
+## Evaluation
+
+An offline evaluation harness runs the questions of `data/eval/questions.jsonl`
+through the answer service and writes a JSON and Markdown report:
+
+```bash
+uv run python -m app.evaluation             # prints the bounds, runs nothing
+uv run python -m app.evaluation --dry-run   # synthetic, fully offline, NOT A BASELINE
+```
+
+A real run (`--live`) calls the Anthropic API within explicit request, retry and
+output-token bounds and requires a separately prepared evaluation database. No
+live baseline has been performed yet. See [docs/evaluation.md](docs/evaluation.md)
+for modes, metrics, cost bounds and the live-run procedure.
+
 ## Running tests
 
 ```bash
@@ -294,10 +309,12 @@ pgvector service container. See
 │   ├── api/                 # POST /search endpoint and dependency wiring
 │   ├── ingestion/           # Document loading, chunking and ingestion CLI
 │   ├── embeddings/          # Local embedding service (FastEmbed)
+│   ├── evaluation/          # Offline evaluation harness and report
 │   ├── llm/                 # LLM configuration, chat model factory, errors
 │   ├── db/                  # PostgreSQL + pgvector persistence
 │   └── retrieval/           # Semantic retrieval service
 ├── data/
+│   ├── eval/                # Evaluation dataset
 │   └── knowledge/           # Synthetic runbooks and incident reports
 ├── migrations/              # Alembic migrations
 ├── tests/                   # Unit and API tests
@@ -306,6 +323,7 @@ pgvector service container. See
 ├── docs/
 │   ├── ai/                  # Project context and development workflow notes
 │   ├── database.md          # Database, migrations and integration testing
+│   ├── evaluation.md        # Evaluation harness, metrics and baseline status
 │   └── embeddings.md        # Embedding model and local caching
 ├── .github/
 │   └── workflows/

@@ -12,6 +12,7 @@ from langchain_core.exceptions import ModelRateLimitError, OutputParserException
 from langchain_core.runnables import RunnableLambda
 
 from app.answering.models import AnswerDraft, Claim
+from app.llm import preflight
 from app.llm.config import DEFAULT_MODEL, LLMConfig
 from app.llm.factory import create_chat_model
 from scripts import answer_smoke
@@ -19,7 +20,7 @@ from scripts import answer_smoke
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "answer_smoke.py"
 
-GUARDED_VARS = (*answer_smoke.ENDPOINT_OVERRIDE_VARS, *answer_smoke.TRACING_VARS)
+GUARDED_VARS = (*preflight.ENDPOINT_OVERRIDE_VARS, *preflight.TRACING_VARS)
 
 KEY = "sk-ant-test-key-SENTINEL-9e41"
 SECRET_VALUE = "https://SENTINEL-redirect-host-4d2f.example"
@@ -465,7 +466,7 @@ def test_model_answer_text_is_printed_json_escaped() -> None:
 # --- environment preflight ----------------------------------------------------
 
 
-@pytest.mark.parametrize("name", answer_smoke.ENDPOINT_OVERRIDE_VARS)
+@pytest.mark.parametrize("name", preflight.ENDPOINT_OVERRIDE_VARS)
 def test_endpoint_override_blocks_the_run_before_any_key_or_model(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -489,7 +490,7 @@ def test_endpoint_override_blocks_the_run_before_any_key_or_model(
     assert KEY not in captured.out + captured.err
 
 
-@pytest.mark.parametrize("name", answer_smoke.TRACING_VARS)
+@pytest.mark.parametrize("name", preflight.TRACING_VARS)
 @pytest.mark.parametrize("value", ["true", "TRUE", "1", "yes", "on", "enabled"])
 def test_active_tracing_blocks_the_run_before_any_key_or_model(
     monkeypatch: pytest.MonkeyPatch,
@@ -506,24 +507,6 @@ def test_active_tracing_blocks_the_run_before_any_key_or_model(
     captured = capsys.readouterr()
     assert name in captured.err
     assert KEY not in captured.out + captured.err
-
-
-def test_all_blocked_names_are_reported_together() -> None:
-    environ = dict.fromkeys(GUARDED_VARS, "true")
-
-    assert sorted(answer_smoke.find_unsafe_environment(environ)) == sorted(GUARDED_VARS)
-
-
-@pytest.mark.parametrize("value", ["", "  ", "false", "False", "0", "no", "off"])
-def test_tracing_explicitly_off_or_blank_is_allowed(value: str) -> None:
-    environ = dict.fromkeys(answer_smoke.TRACING_VARS, value)
-
-    assert answer_smoke.find_unsafe_environment(environ) == []
-
-
-@pytest.mark.parametrize("name", answer_smoke.ENDPOINT_OVERRIDE_VARS)
-def test_blank_endpoint_variable_is_allowed(name: str) -> None:
-    assert answer_smoke.find_unsafe_environment({name: "  "}) == []
 
 
 def test_clean_environment_stays_usable(
