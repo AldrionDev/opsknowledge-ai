@@ -76,7 +76,7 @@ import json
 import os
 import sys
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from importlib import metadata
 from typing import Any
@@ -91,6 +91,7 @@ from app.ingestion.models import DocumentType
 from app.llm.config import API_KEY_ENV, DEFAULT_MODEL, LLMConfig
 from app.llm.errors import LLMError
 from app.llm.factory import create_chat_model
+from app.llm.preflight import find_unsafe_environment
 from app.retrieval.models import RetrievedChunk
 
 SMOKE_MODEL = DEFAULT_MODEL
@@ -99,22 +100,6 @@ SMOKE_MAX_RETRIES = 0
 MAX_MODEL_INVOCATIONS = 2
 
 PACKAGES = ("langchain-anthropic", "langchain-core", "anthropic")
-
-# Variables that would send the request to another endpoint or ship prompts to an
-# external tracing service. The names are those read by the locked stack.
-ENDPOINT_OVERRIDE_VARS = (
-    "ANTHROPIC_BASE_URL",
-    "ANTHROPIC_API_URL",
-    "LANGSMITH_GATEWAY",
-    "LANGSMITH_GATEWAY_API_KEY",
-)
-TRACING_VARS = (
-    "LANGSMITH_TRACING",
-    "LANGSMITH_TRACING_V2",
-    "LANGCHAIN_TRACING_V2",
-    "LANGCHAIN_TRACING",
-)
-_TRACING_OFF_VALUES = frozenset({"", "false", "0", "no", "off"})
 
 SYNTHETIC_CHUNKS = (
     RetrievedChunk(
@@ -206,21 +191,6 @@ def build_smoke_config(api_key: str) -> LLMConfig:
         max_output_tokens=SMOKE_MAX_OUTPUT_TOKENS,
         max_retries=SMOKE_MAX_RETRIES,
     )
-
-
-def find_unsafe_environment(environ: Mapping[str, str]) -> list[str]:
-    """Names of the variables that make a live run unsafe; never their values.
-
-    Fail closed: an endpoint variable counts if it is non-blank, a tracing variable
-    unless it is blank or an explicit false value.
-    """
-    names = [name for name in ENDPOINT_OVERRIDE_VARS if environ.get(name, "").strip()]
-    names += [
-        name
-        for name in TRACING_VARS
-        if environ.get(name, "").strip().lower() not in _TRACING_OFF_VALUES
-    ]
-    return names
 
 
 def read_api_key() -> str:

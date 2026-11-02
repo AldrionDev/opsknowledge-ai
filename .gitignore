@@ -10,6 +10,9 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# Evaluation reports (commit a baseline under docs/ deliberately)
+evaluation-output/
+
 # Environment variables / secrets
 .env
 .env.*

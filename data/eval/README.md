@@ -2,7 +2,7 @@
 
 `questions.jsonl` is a small, fixed, inspectable set of questions for measuring answer quality on the synthetic knowledge corpus in [`../knowledge/`](../knowledge/README.md). Every question and label is written from that corpus only; no real or external operational data is used.
 
-The dataset is data only. Running it against the answer service and computing metrics is the job of the evaluation harness (issue #40), which also computes the dataset version or content hash. The file itself carries no timestamps or version field.
+The dataset is data only. Running it against the answer service and computing metrics is the job of the evaluation harness ([docs/evaluation.md](../../docs/evaluation.md)), which identifies the dataset by the SHA-256 of the file bytes. The file itself carries no timestamps or version field.
 
 Each record was checked against the corpus documents and is validated mechanically by the tests below. The dataset annotations have received human editorial approval for use as a heuristic evaluation reference. This approval does not make keyword-based labels verified factual ground truth.
 
