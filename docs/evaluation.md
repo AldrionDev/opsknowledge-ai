@@ -12,11 +12,196 @@ from a manual, bounded `--live` run that a person starts deliberately.
 
 ## Baseline status
 
-**No live baseline has been performed yet.** No real model output, metric value
-or manual verdict exists for this project at the moment. This section will
-record the baseline once a separately authorized live run has been made: the
-report files, the printed cost bound, the database preparation that was used and
-the human manual-review verdicts.
+### Live baseline — 2026-11-02
+
+**Completed:** one separately authorized, bounded live run using
+`claude-haiku-5-5`. All 24 evaluation questions were processed.
+The run exited with status 0, without invalid model outputs or
+provider errors. These are baseline observations, not production
+quality guarantees.
+
+**Immutable reports:**
+
+- [JSON report](evaluation/baseline-2026-11-02.json) — source of truth.
+- [Markdown report](evaluation/baseline-2026-11-02.md) — generated summary.
+
+The reports are unmodified copies of the original live artifacts.
+Their SHA-256 checksums are:
+
+| File | SHA-256 |
+| --- | --- |
+| `baseline-2026-11-02.json` | `ef3f5aa78a17a5249f3e6a44c868f75012efdc3db57b4dae086042a872202e7f` |
+| `baseline-2026-11-02.md` | `8dd2654c730ac36e1f17af9c9be4a303d63a76ae301cd301903c9575307c8e76` |
+
+### Baseline results
+
+| Metric | Result |
+| --- | --- |
+| Evaluated questions | 24/24 |
+| Answerable outcomes | 8 answered, 2 insufficient context |
+| Document-level Hit@5 (answerable) | 10/10 (100%) |
+| MRR@5 (answerable) | 0.9500 |
+| Answerable heuristic correct | 5/10 (50%) |
+| Unanswerable abstention | 7/7 (100%) |
+| Misleading heuristic accepted | 7/7 (100%), all declined |
+| Invalid output | 0/24 |
+| Provider errors | 0/24 |
+| Reported input tokens | 69,051 |
+| Reported output tokens | 5,325 |
+| LLM invocations | 24 |
+| Unknown-usage invocations | 0 |
+
+All reported token usage comes from completed responses.
+Transport retry counts were not observable, so the absence of
+provider errors does not prove that no retries occurred.
+
+### Execution bounds
+
+The single live invocation used:
+
+- Maximum logical LLM requests: **24**.
+- Maximum transport retries per request: **1**.
+- Maximum output tokens per attempt: **1024**.
+- Printed worst-case output-token bound:
+  `24 x (1 + 1) x 1024 = 49152`.
+
+The output-token bound is **not a monetary cost cap**.
+Input tokens, potentially billable failed or retried attempts,
+and provider pricing are not included in that bound.
+The actual billed cost was not independently verified.
+
+Thinking tokens can consume part of the model's output-token
+allowance. Output truncation may cause structured-output parsing
+failures. No such invalid outputs were observed in this run.
+
+### Reproducibility and database preparation
+
+- Live run ID: `20261102T184540Z-live`.
+- Started: `2026-11-02T18:47:12+00:00`.
+- Finished: `2026-11-02T18:48:04+00:00`.
+- Source commit (C1):
+  `1e1b23ea47646f541d23560f6c43dbe79524782f`.
+- Git working tree at execution: clean.
+- `app/` Git tree:
+  `b44d6ff30234d257413b17ef237d92821f781f8b`.
+- `data/knowledge/` Git tree:
+  `35d9377315c66d8fe1848eeb96b2af888e34558e`.
+- Evaluation dataset: 24 questions, SHA-256
+  `3e2dbbefd62e6683ddb102d2f5c389434541b34dfbe6efac4f6ea8ed443192b1`.
+- Repository corpus: 8 documents, 80 chunks, fingerprint
+  `a96fe58360bb6a8c96242948d06bbbcf3d2b9efd43178d989332d92942f299b3`.
+- Retrieval: semantic PostgreSQL/pgvector, top 5, FastEmbed
+  `BAAI/bge-small-en-v1.5`, 384 dimensions.
+- Context character budget: 8000.
+- Prompt version: `v1`.
+- Anthropic structured output: `json_schema`.
+
+An isolated PostgreSQL 17.11 evaluation database was prepared
+using the pinned image `pgvector/pgvector:0.8.7-pg17-trixie`
+with digest
+`sha256:7a7e9f22015b67edb4bef5c59daeebcd7e74bfa570df6ce60ae01237c8648a84`.
+
+The container used temporary `tmpfs` database storage and a
+localhost-only port. Alembic revision `0001` was applied to an
+empty evaluation database. The approved repository corpus was
+then ingested using the offline FastEmbed snapshot
+`aa8f8b060edb00e03bfdd08813a2949946c8ba55`.
+
+The `eval_owner` role performed migrations and ingestion.
+The harness used `eval_reader`, restricted to read-only access.
+The reader's rejection of a DELETE statement was verified.
+
+`HF_HUB_OFFLINE=1`, `UV_OFFLINE=1`, and `UV_NO_ENV_FILE=1`
+were set for the evaluation session.
+
+The actual execution used non-interactive `docker exec` calls
+in the `owner_psql` and `reader_psql` shell helpers to avoid
+a terminal job-control / SIGTTIN suspension. This adjustment
+was limited to the execution session.
+
+The harness independently verified corpus identity and
+read-only database access immediately before the live run.
+Embedding-vector provenance is **not cryptographically verified**;
+the pinned offline cache snapshot is operational evidence only.
+
+### Human-approved manual review
+
+The following verdicts were explicitly reviewed and approved
+after the live run:
+
+| Question | Verdict | Reason |
+| --- | --- | --- |
+| `answerable-05` | **CORRECT** | Correctly identifies the unbounded log archive and missing rotation as the incident root cause. |
+| `answerable-03` | **CORRECT** | Correctly explains the HTTP 401 registry response as compatible with authentication requirements and registry reachability. |
+| `answerable-10` | **INCOMPLETE** | Mentions reverting the ConfigMap change but omits the `kubectl rollout restart` step required to restore service. |
+
+For `answerable-10`, the retrieved top-five chunks did not
+contain the relevant `rollout restart` evidence. Its incomplete
+answer must not be attributed solely to the LLM.
+
+### Additional offline diagnostic audit
+
+A targeted, offline audit compared the stored retrieved chunks
+against the original sources and reproduced context assembly
+using the recorded retrieval results. No additional paid
+model invocation was made.
+
+The document-level Hit@5 metric counts a hit when an expected
+source document appears in the retrieved chunk list. It does
+**not** require the exact answer-bearing chunk to be present.
+
+Across all ten answerable questions, diagnostic keyword
+coverage of the reproduced context was:
+
+- **FULL:** 6/10 questions.
+- **PARTIAL:** 2/10 questions.
+- **NONE:** 2/10 questions.
+
+These are diagnostic keyword matches, **not official
+evidence-recall or factual-correctness metrics**.
+
+For five specifically investigated answerable questions:
+
+| Question | Diagnostic finding |
+| --- | --- |
+| `answerable-01` | The `preStop` and `terminationGracePeriodSeconds` chunk was stored but absent from the top five. |
+| `answerable-02` | Chunks explaining exit codes 126/127 were stored but absent from the top five. |
+| `answerable-06` | Chunks specifying `keepAliveTimeout = 65 seconds` were stored but absent from the top five. |
+| `answerable-08` | The retrieved context contained `250ms` but omitted the `RETRY_BACKOFF_MS` parameter name. |
+| `answerable-10` | The retrieved context contained ConfigMap references but omitted the corrective `kubectl rollout restart` step. |
+
+The reproduced context assembly included all five retrieved
+chunks for each investigated question, without exceeding the
+8000-character limit. The reproduced contexts ranged from
+3760 to 4876 characters for these five questions.
+
+A generic `restart` keyword in `answerable-10` came from
+an incident-impact description (`restarted`), not the
+corrective `kubectl rollout restart` operation. Thus a FULL
+keyword-coverage result can be misleading.
+
+**Primary improvement candidate:** evidence-level chunk
+selection, retrieval ranking, and evidence-oriented evaluation.
+These observations do not establish an experimentally validated
+root cause or demonstrate an improvement.
+
+### Baseline interpretation and limitations
+
+This is one nondeterministic live run over a small, fixed
+24-question dataset; it is not a statistically reliable
+production benchmark.
+
+Keyword-based grading can yield false positives and false
+negatives. Semantic similarity scores are descriptive, not
+calibrated confidence thresholds. The original provider
+payload was not independently captured byte-for-byte; context
+assembly was reconstructed offline from recorded retrieval
+metadata and verified stored chunk contents.
+
+The baseline reports remain the source of truth for the
+recorded run. The supplemental offline audit and human
+verdicts are documented separately here.
+
 
 ## Modes
 

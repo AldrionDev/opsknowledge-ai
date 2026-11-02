@@ -1,0 +1,2128 @@
+{
+  "bounds": {
+    "ceilings": {
+      "max_output_tokens": 2048,
+      "max_requests": 30,
+      "max_retries": 2
+    },
+    "max_consecutive_provider_errors": 3,
+    "max_output_tokens": 1024,
+    "max_requests": 24,
+    "max_retries": 1,
+    "worst_case_note": "Bounds output tokens only. It is not a total API cost bound: input tokens (instructions, schema, the assembled context of up to the fixed character budget and the question, re-sent on every retry) and provider pricing are not included.",
+    "worst_case_output_tokens": 49152
+  },
+  "code": {
+    "app_tree": "b44d6ff30234d257413b17ef237d92821f781f8b",
+    "commit_sha": "1e1b23ea47646f541d23560f6c43dbe79524782f",
+    "corpus_tree": "35d9377315c66d8fe1848eeb96b2af888e34558e",
+    "worktree_clean": true
+  },
+  "context": {
+    "character_budget": 8000
+  },
+  "corpus": {
+    "chunk_count": 80,
+    "document_count": 8,
+    "fingerprint": "a96fe58360bb6a8c96242948d06bbbcf3d2b9efd43178d989332d92942f299b3"
+  },
+  "database": {
+    "chunk_count": 80,
+    "corpus_fingerprint": "a96fe58360bb6a8c96242948d06bbbcf3d2b9efd43178d989332d92942f299b3",
+    "corpus_verified": true,
+    "document_count": 8,
+    "embedding_provenance_verified": false,
+    "migration_revision": "0001",
+    "name": "opsknowledge_eval",
+    "preparation_note": "Expected: a separately provisioned, empty evaluation database, migrated with Alembic and ingested from the recorded corpus tree with `python -m app.ingestion` (see docs/evaluation.md). The harness verified the stored chunks against the repository corpus and accessed the database read-only.",
+    "read_only_transactions": true,
+    "used": true
+  },
+  "dataset": {
+    "category_counts": {
+      "answerable": 10,
+      "misleading": 7,
+      "unanswerable": 7
+    },
+    "path": "data/eval/questions.jsonl",
+    "record_count": 24,
+    "sha256": "3e2dbbefd62e6683ddb102d2f5c389434541b34dfbe6efac4f6ea8ed443192b1",
+    "version": "sha256:3e2dbbefd62e"
+  },
+  "limitations": [
+    "A single run over a small dataset is indicative, not statistical.",
+    "Actual model outputs are nondeterministic; repeated live runs can differ.",
+    "Keyword-based figures are heuristic proxies, not measures of factual correctness: paraphrases cause false negatives, keywords inside wrong or negated statements cause false positives, and forbidden lists are not exhaustive.",
+    "Similarity-score distributions are descriptive only; no threshold is derived or applied.",
+    "Database verification checks chunk identity, metadata and content against the repository corpus; it does not establish which model computed the stored embedding vectors.",
+    "Provider token usage is reported only for completed responses; usage of failed, timed-out or retried attempts is unknown and may still be billed.",
+    "The worst-case output-token bound is not a total cost bound: input tokens and provider pricing are not included."
+  ],
+  "llm": {
+    "anthropic_version": "1.13.0",
+    "implementation": "anthropic",
+    "langchain_anthropic_version": "1.7.6",
+    "langchain_core_version": "1.6.10",
+    "max_output_tokens": 1024,
+    "max_retries": 1,
+    "model": "claude-haiku-5-5",
+    "sampling_parameters": "none",
+    "structured_output_method": "json_schema",
+    "timeout_seconds": 60.0
+  },
+  "manual_review": {
+    "items": [
+      {
+        "answer": "The root cause was an unbounded log archive on the worker node. [4]\nA batch job wrote logs to /var/log/app-archive on the node, and no log rotation or retention rule existed for that path. [4]\nOver several months the archive filled the shared /var filesystem, so the container runtime could not write the layers of the new image. [4]",
+        "category": "answerable",
+        "cited_sources": [
+          "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md",
+          "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md",
+          "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        ],
+        "expected_sources": [
+          "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        ],
+        "forbidden_keywords": [],
+        "heuristic": {
+          "cites_expected_source": true,
+          "forbidden_keywords_found": [],
+          "heuristic_correct": true,
+          "missing_required_keywords": []
+        },
+        "id": "answerable-05",
+        "notes": "Expected: answer. Root cause section: an unbounded log archive of the report-export job in /var/log/app-archive without log rotation filled /var on node-a3. Not a registry or credential problem.",
+        "question": "What was the root cause of INC-2025-001, in which report-service pods were stuck in ImagePullBackOff?",
+        "required_keywords": [
+          "app-archive",
+          "rotation"
+        ]
+      },
+      {
+        "answer": "An HTTP 401 from the registry's /v2/ endpoint is normal for a registry that requires authentication and shows that the registry is reachable. [3]",
+        "category": "answerable",
+        "cited_sources": [
+          "runbooks/kubernetes-imagepullbackoff.md"
+        ],
+        "expected_sources": [
+          "runbooks/kubernetes-imagepullbackoff.md"
+        ],
+        "forbidden_keywords": [],
+        "heuristic": {
+          "cites_expected_source": true,
+          "forbidden_keywords_found": [],
+          "heuristic_correct": true,
+          "missing_required_keywords": []
+        },
+        "id": "answerable-03",
+        "notes": "Expected: answer. Diagnosis step 6: a 401 is normal for a registry that requires authentication and shows that the registry is reachable.",
+        "question": "According to the Kubernetes ImagePullBackOff runbook, what does an HTTP 401 response from the registry's /v2/ endpoint indicate?",
+        "required_keywords": [
+          "authentication",
+          "reachable"
+        ]
+      },
+      {
+        "answer": "The service was restored by reverting the invalid ConfigMap change, which is marked as completed in the incident's action items. [5]",
+        "category": "answerable",
+        "cited_sources": [
+          "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        ],
+        "expected_sources": [
+          "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        ],
+        "forbidden_keywords": [],
+        "heuristic": {
+          "cites_expected_source": true,
+          "forbidden_keywords_found": [],
+          "heuristic_correct": false,
+          "missing_required_keywords": [
+            "restart"
+          ]
+        },
+        "id": "answerable-10",
+        "notes": "Expected: answer. Resolution section: the ConfigMap change was reverted in version control and applied, then kubectl rollout restart picked up the corrected values. kubectl rollout undo would not have helped.",
+        "question": "How was service restored in INC-2025-004?",
+        "required_keywords": [
+          "revert",
+          "ConfigMap",
+          "restart"
+        ]
+      }
+    ],
+    "selection_rule": "Every answered misleading question, plus up to 3 answered answerable and up to 3 answered unanswerable questions, chosen by ascending SHA-256 of the question id. The harness assigns no verdicts; human verdicts are recorded in docs/evaluation.md."
+  },
+  "metrics": {
+    "answerable": {
+      "failures": {
+        "answered_missing_expected_citation": {
+          "count": 0,
+          "n": 10,
+          "rate": 0.0
+        },
+        "answered_missing_required_keywords": {
+          "count": 3,
+          "n": 10,
+          "rate": 0.3
+        },
+        "insufficient_context": {
+          "empty_context": {
+            "count": 0,
+            "n": 10,
+            "rate": 0.0
+          },
+          "model_declined": {
+            "count": 2,
+            "n": 10,
+            "rate": 0.2
+          },
+          "no_retrieval": {
+            "count": 0,
+            "n": 10,
+            "rate": 0.0
+          }
+        },
+        "invalid_output": {
+          "inconsistent_response": {
+            "count": 0,
+            "n": 10,
+            "rate": 0.0
+          },
+          "malformed_output": {
+            "count": 0,
+            "n": 10,
+            "rate": 0.0
+          },
+          "missing_evidence": {
+            "count": 0,
+            "n": 10,
+            "rate": 0.0
+          },
+          "unknown_citation": {
+            "count": 0,
+            "n": 10,
+            "rate": 0.0
+          }
+        },
+        "provider_error": {
+          "count": 0,
+          "n": 10,
+          "rate": 0.0
+        }
+      },
+      "heuristic_correct": {
+        "count": 5,
+        "n": 10,
+        "rate": 0.5
+      },
+      "n": 10,
+      "synthetic": false
+    },
+    "global": {
+      "citation_count_distribution": {
+        "histogram": {
+          "1": 4,
+          "2": 3,
+          "3": 1
+        },
+        "max": 3,
+        "median": 1.5,
+        "min": 1,
+        "n": 8
+      },
+      "invalid_output": {
+        "inconsistent_response": {
+          "count": 0,
+          "n": 24,
+          "rate": 0.0
+        },
+        "malformed_output": {
+          "count": 0,
+          "n": 24,
+          "rate": 0.0
+        },
+        "missing_evidence": {
+          "count": 0,
+          "n": 24,
+          "rate": 0.0
+        },
+        "unknown_citation": {
+          "count": 0,
+          "n": 24,
+          "rate": 0.0
+        }
+      },
+      "llm_invoked_questions": 24,
+      "n": 24,
+      "outcomes": {
+        "answered": {
+          "count": 8,
+          "n": 24,
+          "rate": 0.3333
+        },
+        "insufficient_context": {
+          "count": 16,
+          "n": 24,
+          "rate": 0.6667
+        },
+        "invalid_output": {
+          "count": 0,
+          "n": 24,
+          "rate": 0.0
+        },
+        "provider_error": {
+          "count": 0,
+          "n": 24,
+          "rate": 0.0
+        }
+      },
+      "outcomes_by_category": {
+        "answerable": {
+          "answered": 8,
+          "insufficient_context": 2,
+          "invalid_output": 0,
+          "provider_error": 0
+        },
+        "misleading": {
+          "answered": 0,
+          "insufficient_context": 7,
+          "invalid_output": 0,
+          "provider_error": 0
+        },
+        "unanswerable": {
+          "answered": 0,
+          "insufficient_context": 7,
+          "invalid_output": 0,
+          "provider_error": 0
+        }
+      },
+      "provider_error": {
+        "count": 0,
+        "n": 24,
+        "rate": 0.0
+      },
+      "similarity_scores": {
+        "answerable": {
+          "all": {
+            "max": 0.9056,
+            "mean": 0.7788,
+            "median": 0.7892,
+            "min": 0.6384,
+            "n": 50,
+            "p25": 0.7621,
+            "p75": 0.8062
+          },
+          "top1": {
+            "max": 0.9056,
+            "mean": 0.8176,
+            "median": 0.8211,
+            "min": 0.6773,
+            "n": 10,
+            "p25": 0.8076,
+            "p75": 0.8422
+          }
+        },
+        "misleading": {
+          "all": {
+            "max": 0.8196,
+            "mean": 0.7493,
+            "median": 0.7482,
+            "min": 0.6889,
+            "n": 35,
+            "p25": 0.7288,
+            "p75": 0.7655
+          },
+          "top1": {
+            "max": 0.8196,
+            "mean": 0.7813,
+            "median": 0.7888,
+            "min": 0.74,
+            "n": 7,
+            "p25": 0.7545,
+            "p75": 0.806
+          }
+        },
+        "unanswerable": {
+          "all": {
+            "max": 0.8105,
+            "mean": 0.6686,
+            "median": 0.6598,
+            "min": 0.5786,
+            "n": 35,
+            "p25": 0.6295,
+            "p75": 0.7034
+          },
+          "top1": {
+            "max": 0.8105,
+            "mean": 0.6961,
+            "median": 0.676,
+            "min": 0.6342,
+            "n": 7,
+            "p25": 0.6525,
+            "p75": 0.7236
+          }
+        }
+      },
+      "synthetic": false
+    },
+    "misleading": {
+      "accepted": {
+        "count": 7,
+        "n": 7,
+        "rate": 1.0
+      },
+      "accepted_declined": {
+        "count": 7,
+        "n": 7,
+        "rate": 1.0
+      },
+      "accepted_heuristic_supported_correction": {
+        "count": 0,
+        "n": 7,
+        "rate": 0.0
+      },
+      "declined_by_reason": {
+        "empty_context": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "model_declined": {
+          "count": 7,
+          "n": 7,
+          "rate": 1.0
+        },
+        "no_retrieval": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        }
+      },
+      "heuristic_false_answer": {
+        "count": 0,
+        "n": 7,
+        "rate": 0.0
+      },
+      "heuristic_false_answer_reasons": {
+        "forbidden_keyword": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "no_expected_source_cited": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        }
+      },
+      "invalid_output": {
+        "inconsistent_response": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "malformed_output": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "missing_evidence": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "unknown_citation": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        }
+      },
+      "n": 7,
+      "provider_error": {
+        "count": 0,
+        "n": 7,
+        "rate": 0.0
+      },
+      "synthetic": false
+    },
+    "retrieval": {
+      "expected_rank_histogram": {
+        "1": 9,
+        "2": 1,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+        "miss": 0
+      },
+      "hit_at_k": {
+        "count": 10,
+        "n": 10,
+        "rate": 1.0
+      },
+      "k": 5,
+      "mrr_at_k": {
+        "n": 10,
+        "reciprocal_rank_sum": 9.5,
+        "value": 0.95
+      },
+      "n": 10,
+      "synthetic": false
+    },
+    "unanswerable": {
+      "abstention": {
+        "count": 7,
+        "n": 7,
+        "rate": 1.0
+      },
+      "abstention_by_reason": {
+        "empty_context": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "model_declined": {
+          "count": 7,
+          "n": 7,
+          "rate": 1.0
+        },
+        "no_retrieval": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        }
+      },
+      "false_answer": {
+        "count": 0,
+        "n": 7,
+        "rate": 0.0
+      },
+      "invalid_output": {
+        "inconsistent_response": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "malformed_output": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "missing_evidence": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        },
+        "unknown_citation": {
+          "count": 0,
+          "n": 7,
+          "rate": 0.0
+        }
+      },
+      "n": 7,
+      "provider_error": {
+        "count": 0,
+        "n": 7,
+        "rate": 0.0
+      },
+      "synthetic": false
+    }
+  },
+  "prompt": {
+    "hash": "9980f5e7ba03141626b7c626070cd5b4b51a39ba71633831bf5ca463c3c47060",
+    "version": "v1"
+  },
+  "questions": [
+    {
+      "answer": null,
+      "category": "answerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {},
+      "hit_at_k": true,
+      "id": "answerable-01",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 3,
+      "retrieval": [
+        {
+          "chunk_id": "1993080c2624eaacb8ec3af6d377cf2e118392c2d9f8a1543e71ac90903c133a",
+          "document_type": "runbook",
+          "position": 1,
+          "similarity_score": 0.806797,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "a3ebef463df6b7ec1f14281bc275e518c04de0c166bfb75040fbfa7385870f48",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.801649,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.793214,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "6912450431e4b3688f9e00dc31b891221f3b675f13a4b32b6f4d5829469a5764",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.79025,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "4215384396bac8f6a2563a72807540786fccd2a4a831ffce76a3f4311cb859b5",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.776951,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 3049,
+        "output_tokens": 151,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "answerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": 2,
+      "heuristic": {},
+      "hit_at_k": true,
+      "id": "answerable-02",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 0.5,
+      "relevant_chunks": 2,
+      "retrieval": [
+        {
+          "chunk_id": "ed164d4ee770f552ad6f600bfb94e4a8a2ff78c5909f7ef8d47a040852f48d54",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.827452,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "be5fe2b23ccfeb9e5bf85026cfb5efdfa649ef8fe33b0d2d3cf6ce33eebd8551",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.808917,
+          "source_path": "runbooks/kubernetes-crashloopbackoff.md"
+        },
+        {
+          "chunk_id": "98b4596a63e0ccfe10bc92d8d0744042a4bad56876c4ced41873734d982e2adb",
+          "document_type": "runbook",
+          "position": 3,
+          "similarity_score": 0.805518,
+          "source_path": "runbooks/kubernetes-crashloopbackoff.md"
+        },
+        {
+          "chunk_id": "a9e9662d66098e592d35314e93ba1eb3b70772dc591a120d6b8c27d540550b60",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.793973,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "f452822b5bc8dcd0eea657adc9472a8b7282e678301f076cb17e0c33b5679790",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.789141,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2838,
+        "output_tokens": 84,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "An HTTP 401 from the registry's /v2/ endpoint is normal for a registry that requires authentication and shows that the registry is reachable. [3]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "b42d6e248391cefa253f1393eb92c283e58518ff3ab303287579abc085b8500e",
+          "source_id": 3,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": true,
+        "missing_required_keywords": []
+      },
+      "hit_at_k": true,
+      "id": "answerable-03",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 4,
+      "retrieval": [
+        {
+          "chunk_id": "a43a411ea9cb02ce432084dab0ce69815a5283d7f682d23ef1164d1df96b3a27",
+          "document_type": "runbook",
+          "position": 1,
+          "similarity_score": 0.814707,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        },
+        {
+          "chunk_id": "4d74fa5720131dff40b010a85fdf09d7c4e2181d6ffc11cfcb55731f5806f1ca",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.805528,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        },
+        {
+          "chunk_id": "b42d6e248391cefa253f1393eb92c283e58518ff3ab303287579abc085b8500e",
+          "document_type": "runbook",
+          "position": 3,
+          "similarity_score": 0.799942,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        },
+        {
+          "chunk_id": "f8177eb06f6e8afc75f65780957f9077e22044960d226177df0e71254d357873",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.794523,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "41d64e46ed935cc09cfb595422e8fe594b558e70b4f8194917e8a53e0a12134c",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.789265,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 3104,
+        "output_tokens": 134,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "A Linux filesystem can run out of inodes, which limit the number of files it can hold, while disk blocks may still be available. [2]\nInode exhaustion can be checked with the df -i command, which shows 100% IUse% when inodes are full, even though df -h shows free space. [4]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "2db7671ba9f5b5e4befbfe5522cdcab90a2d016ea5d1bbd36fa0c2a5986e471b",
+          "source_id": 2,
+          "source_path": "runbooks/linux-disk-space-exhaustion.md"
+        },
+        {
+          "chunk_id": "8015a2f541a71b8960858f3e9a06e9d63c550dd3149e95503e02afc93b6e6ec8",
+          "source_id": 4,
+          "source_path": "runbooks/linux-disk-space-exhaustion.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": true,
+        "missing_required_keywords": []
+      },
+      "hit_at_k": true,
+      "id": "answerable-04",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 3,
+      "retrieval": [
+        {
+          "chunk_id": "72cf9e955b0e87152e8035caafe0c4b0e41e86b1857017ee49e395dbb47757c7",
+          "document_type": "runbook",
+          "position": 1,
+          "similarity_score": 0.806477,
+          "source_path": "runbooks/linux-disk-space-exhaustion.md"
+        },
+        {
+          "chunk_id": "2db7671ba9f5b5e4befbfe5522cdcab90a2d016ea5d1bbd36fa0c2a5986e471b",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.802378,
+          "source_path": "runbooks/linux-disk-space-exhaustion.md"
+        },
+        {
+          "chunk_id": "a9e9662d66098e592d35314e93ba1eb3b70772dc591a120d6b8c27d540550b60",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.799037,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "8015a2f541a71b8960858f3e9a06e9d63c550dd3149e95503e02afc93b6e6ec8",
+          "document_type": "runbook",
+          "position": 4,
+          "similarity_score": 0.775512,
+          "source_path": "runbooks/linux-disk-space-exhaustion.md"
+        },
+        {
+          "chunk_id": "d97975ed6617396e39a2df4e7058652e67338e5a71913136a48ced350299bd91",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.761594,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2939,
+        "output_tokens": 726,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "The root cause was an unbounded log archive on the worker node. [4]\nA batch job wrote logs to /var/log/app-archive on the node, and no log rotation or retention rule existed for that path. [4]\nOver several months the archive filled the shared /var filesystem, so the container runtime could not write the layers of the new image. [4]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "92419a74c6eb3359e684b7e5a0630f9404bf13cc0a78f48b74caf0e55e69a6e0",
+          "source_id": 4,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "92419a74c6eb3359e684b7e5a0630f9404bf13cc0a78f48b74caf0e55e69a6e0",
+          "source_id": 4,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "92419a74c6eb3359e684b7e5a0630f9404bf13cc0a78f48b74caf0e55e69a6e0",
+          "source_id": 4,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": true,
+        "missing_required_keywords": []
+      },
+      "hit_at_k": true,
+      "id": "answerable-05",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 3,
+      "retrieval": [
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.905607,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.785659,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "00cce5f9c8af2e43ace5d129810875b1d49817420625f9269b7301e3dad5bfb8",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.783352,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "92419a74c6eb3359e684b7e5a0630f9404bf13cc0a78f48b74caf0e55e69a6e0",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.780986,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "f8177eb06f6e8afc75f65780957f9077e22044960d226177df0e71254d357873",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.763649,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2859,
+        "output_tokens": 552,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "The sources do not state a specific value. The completed follow-up set the keep-alive and headers timeouts explicitly in the storefront server code, with a comment linking them to the load balancer idle timeout. [3]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "d0d9288c967fdb580da1bb480150d174ff740e2684f2d77d12aa9af5894ffb8a",
+          "source_id": 3,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": false,
+        "missing_required_keywords": [
+          "keepAliveTimeout",
+          "65"
+        ]
+      },
+      "hit_at_k": true,
+      "id": "answerable-06",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 3,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.83853,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.832791,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "d0d9288c967fdb580da1bb480150d174ff740e2684f2d77d12aa9af5894ffb8a",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.739617,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "1993080c2624eaacb8ec3af6d377cf2e118392c2d9f8a1543e71ac90903c133a",
+          "document_type": "runbook",
+          "position": 4,
+          "similarity_score": 0.737857,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.737537,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2831,
+        "output_tokens": 1024,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "The new 5.8.0 release increased the memory needed at startup beyond the container limit of 1Gi, so the kernel killed the container with OOMKilled. [4]\nAfter the kernel killed the container, the kubelet restarted it repeatedly, which led to CrashLoopBackOff with growing restart delays. [4]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "source_id": 4,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "source_id": 4,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": true,
+        "missing_required_keywords": []
+      },
+      "hit_at_k": true,
+      "id": "answerable-07",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 3,
+      "retrieval": [
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.845759,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "00cce5f9c8af2e43ace5d129810875b1d49817420625f9269b7301e3dad5bfb8",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.815403,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.793245,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.786922,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "26f08d9ad530300d81298fc0ec1b38d6871a8122c373c3304532a72a0c1ad889",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.781554,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2901,
+        "output_tokens": 562,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "The configuration value was changed to 250ms instead of 250, a format the application could not parse. [2]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "00cce5f9c8af2e43ace5d129810875b1d49817420625f9269b7301e3dad5bfb8",
+          "source_id": 2,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": false,
+        "missing_required_keywords": [
+          "RETRY_BACKOFF_MS"
+        ]
+      },
+      "hit_at_k": true,
+      "id": "answerable-08",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 2,
+      "retrieval": [
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.843423,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "00cce5f9c8af2e43ace5d129810875b1d49817420625f9269b7301e3dad5bfb8",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.816629,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.783277,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.781335,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.779103,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2983,
+        "output_tokens": 100,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "INC-2025-002 was caused by a keep-alive timeout mismatch on the storefront service. [1]\nINC-2025-003 was caused by search-api pods being OOMKilled and then stuck in CrashLoopBackOff. [3]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "source_id": 1,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "source_id": 3,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": true,
+        "missing_required_keywords": []
+      },
+      "hit_at_k": true,
+      "id": "answerable-09",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 2,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.809984,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "ced69f91befd7aae86c4ae785df5bc43e41181fb917bd983334ac4fba3362fb6",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.757138,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.75192,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.724307,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "1993080c2624eaacb8ec3af6d377cf2e118392c2d9f8a1543e71ac90903c133a",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.719754,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2875,
+        "output_tokens": 693,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": "The service was restored by reverting the invalid ConfigMap change, which is marked as completed in the incident's action items. [5]",
+      "category": "answerable",
+      "citations": [
+        {
+          "chunk_id": "bb648421bb9b200c624dc2905f6c6af3c0c76323405c174374b6b05c9933d010",
+          "source_id": 5,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        }
+      ],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {
+        "cites_expected_source": true,
+        "forbidden_keywords_found": [],
+        "heuristic_correct": false,
+        "missing_required_keywords": [
+          "restart"
+        ]
+      },
+      "hit_at_k": true,
+      "id": "answerable-10",
+      "llm_invoked": true,
+      "outcome": "answered",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": null,
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 2,
+      "retrieval": [
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.677344,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.671812,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.669733,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.646715,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "bb648421bb9b200c624dc2905f6c6af3c0c76323405c174374b6b05c9933d010",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.638432,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2750,
+        "output_tokens": 417,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-01",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.634186,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.621907,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.619309,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.605962,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.578584,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2782,
+        "output_tokens": 18,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-02",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.645616,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.63555,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.624716,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.607451,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.60662,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2738,
+        "output_tokens": 103,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-03",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "a9e9662d66098e592d35314e93ba1eb3b70772dc591a120d6b8c27d540550b60",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.740994,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "ed164d4ee770f552ad6f600bfb94e4a8a2ff78c5909f7ef8d47a040852f48d54",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.732276,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "2c68c1be99dca8979abb7d2dd58b6e2bde9d6acb93e375fa0f06b0ac239b0255",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.731876,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "c9750b71c6029e9eb50e5300c23ffa8eed4790c226bd42a0617c7d7fe4c690e1",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.727417,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "45541db1b028514d2176d1c7d53533ed130f7088efd26a3309b4766354498d37",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.724673,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2922,
+        "output_tokens": 69,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-04",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "f6c0ef322ab43da8497d029b9922828af53eb6ed8b98d3dbb2c5332f44fcfadf",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.81047,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.723271,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "33a79553306bc27b0438389a8c2f735e0c7f60382a96ec2da1cb223d700a646e",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.702394,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "ade02f3d413fb44ba500222352ed5dbc412288a8e73b22c037257e2db24c023e",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.700159,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.659751,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2769,
+        "output_tokens": 17,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-05",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.706108,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "18bb35f99678e87254cc9a983954ddc4e988346ec7771bca6055736c12580150",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.703699,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "29c4b6ebc17afa2eab2802fb21dd139a7e1bc050435fa9d01c32aca4ff9e053f",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.703196,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "4e822562aaa60428b8f14623219b0aec1ab693b9c7e5ba458c7cc8ba86fe8f8d",
+          "document_type": "runbook",
+          "position": 4,
+          "similarity_score": 0.698392,
+          "source_path": "runbooks/linux-disk-space-exhaustion.md"
+        },
+        {
+          "chunk_id": "ade02f3d413fb44ba500222352ed5dbc412288a8e73b22c037257e2db24c023e",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.693414,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2796,
+        "output_tokens": 17,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-06",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.659296,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.641282,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "f6c0ef322ab43da8497d029b9922828af53eb6ed8b98d3dbb2c5332f44fcfadf",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.640714,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "6912450431e4b3688f9e00dc31b891221f3b675f13a4b32b6f4d5829469a5764",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.610841,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "d0d9288c967fdb580da1bb480150d174ff740e2684f2d77d12aa9af5894ffb8a",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.599011,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2914,
+        "output_tokens": 17,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "unanswerable",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "unanswerable-07",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "d0b6a4831585e5e13ae9485baf57471b5dc3e1a85aa58454f621fe01a38b54ca",
+          "document_type": "runbook",
+          "position": 1,
+          "similarity_score": 0.675967,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "cd3c83faf30c0bba53e6d84964e1b512bb5ee1775b0c30094c38f4fa561a126f",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.674335,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        },
+        {
+          "chunk_id": "18bb35f99678e87254cc9a983954ddc4e988346ec7771bca6055736c12580150",
+          "document_type": "runbook",
+          "position": 3,
+          "similarity_score": 0.661742,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "a43a411ea9cb02ce432084dab0ce69815a5283d7f682d23ef1164d1df96b3a27",
+          "document_type": "runbook",
+          "position": 4,
+          "similarity_score": 0.650708,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        },
+        {
+          "chunk_id": "b42d6e248391cefa253f1393eb92c283e58518ff3ab303287579abc085b8500e",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.647989,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2943,
+        "output_tokens": 18,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {},
+      "hit_at_k": true,
+      "id": "misleading-01",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 1,
+      "retrieval": [
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.741407,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.725091,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.722954,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "cd3c83faf30c0bba53e6d84964e1b512bb5ee1775b0c30094c38f4fa561a126f",
+          "document_type": "runbook",
+          "position": 4,
+          "similarity_score": 0.70169,
+          "source_path": "runbooks/kubernetes-imagepullbackoff.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.688876,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2796,
+        "output_tokens": 112,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": 3,
+      "heuristic": {},
+      "hit_at_k": true,
+      "id": "misleading-02",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 0.3333,
+      "relevant_chunks": 1,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.819557,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "29c4b6ebc17afa2eab2802fb21dd139a7e1bc050435fa9d01c32aca4ff9e053f",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.805678,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.775626,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "d0d9288c967fdb580da1bb480150d174ff740e2684f2d77d12aa9af5894ffb8a",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.774477,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "ade02f3d413fb44ba500222352ed5dbc412288a8e73b22c037257e2db24c023e",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.763615,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2850,
+        "output_tokens": 151,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": 1,
+      "heuristic": {},
+      "hit_at_k": true,
+      "id": "misleading-03",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 1.0,
+      "relevant_chunks": 3,
+      "retrieval": [
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.788826,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "c164914785d9ca8fb7844349950ced404ff814bba21100da087c575fe9d520bb",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.762929,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "00cce5f9c8af2e43ace5d129810875b1d49817420625f9269b7301e3dad5bfb8",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.733225,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.729654,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "b868a87f4131b5037ee616f94f47c04f3a609c165051c7ce96149debda0a9d66",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.728637,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 3064,
+        "output_tokens": 111,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": 2,
+      "heuristic": {},
+      "hit_at_k": true,
+      "id": "misleading-04",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 0.5,
+      "relevant_chunks": 2,
+      "retrieval": [
+        {
+          "chunk_id": "00cce5f9c8af2e43ace5d129810875b1d49817420625f9269b7301e3dad5bfb8",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.803891,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.763528,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "bb648421bb9b200c624dc2905f6c6af3c0c76323405c174374b6b05c9933d010",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.749986,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.748153,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "594354f18f55cddbb1a31614a74e77bb18de64b430a785e52a9ee8d4c9078ecb",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.747817,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2762,
+        "output_tokens": 196,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": false,
+      "id": "misleading-05",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": 0.0,
+      "relevant_chunks": 0,
+      "retrieval": [
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.808127,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "ced69f91befd7aae86c4ae785df5bc43e41181fb917bd983334ac4fba3362fb6",
+          "document_type": "runbook",
+          "position": 2,
+          "similarity_score": 0.767396,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.759975,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.759373,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "1993080c2624eaacb8ec3af6d377cf2e118392c2d9f8a1543e71ac90903c133a",
+          "document_type": "runbook",
+          "position": 5,
+          "similarity_score": 0.753566,
+          "source_path": "runbooks/http-502-behind-load-balancer.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2784,
+        "output_tokens": 18,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "misleading-06",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "6987207de8694dfd0a32013fe696e7bc3796911b125498593f0c07b67efdf77f",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.767511,
+          "source_path": "incidents/inc-2025-004-payments-gateway-crashloopbackoff-config-error.md"
+        },
+        {
+          "chunk_id": "1bcc392268653e99bae1b25937c1fa78a94cc7309387ef563426ff1f58fa0811",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.751034,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "e675fd422ac4473b1d392e7168fc06cdd75d613e5a665a53eeb59c8f20e8211b",
+          "document_type": "incident",
+          "position": 3,
+          "similarity_score": 0.71481,
+          "source_path": "incidents/inc-2025-002-storefront-502-idle-timeout-mismatch.md"
+        },
+        {
+          "chunk_id": "09e8d92c62c1041e8a961f6a428cef2151fcb075debab8271919943c59efa365",
+          "document_type": "incident",
+          "position": 4,
+          "similarity_score": 0.711909,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "b790e8f6de15267b197e2c9c8cecd455c93e2833dc5d7504359df5a51a8fdd1d",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.695577,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 2732,
+        "output_tokens": 18,
+        "responses_with_usage": 1
+      }
+    },
+    {
+      "answer": null,
+      "category": "misleading",
+      "citations": [],
+      "code": null,
+      "expected_rank": null,
+      "heuristic": {},
+      "hit_at_k": null,
+      "id": "misleading-07",
+      "llm_invoked": true,
+      "outcome": "insufficient_context",
+      "provider_error": null,
+      "provider_failure_kind": null,
+      "reason": "model_declined",
+      "reciprocal_rank": null,
+      "relevant_chunks": null,
+      "retrieval": [
+        {
+          "chunk_id": "c9750b71c6029e9eb50e5300c23ffa8eed4790c226bd42a0617c7d7fe4c690e1",
+          "document_type": "incident",
+          "position": 1,
+          "similarity_score": 0.740018,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        },
+        {
+          "chunk_id": "a9e9662d66098e592d35314e93ba1eb3b70772dc591a120d6b8c27d540550b60",
+          "document_type": "incident",
+          "position": 2,
+          "similarity_score": 0.738666,
+          "source_path": "incidents/inc-2025-001-report-service-imagepullbackoff-node-disk-full.md"
+        },
+        {
+          "chunk_id": "98b4596a63e0ccfe10bc92d8d0744042a4bad56876c4ced41873734d982e2adb",
+          "document_type": "runbook",
+          "position": 3,
+          "similarity_score": 0.73721,
+          "source_path": "runbooks/kubernetes-crashloopbackoff.md"
+        },
+        {
+          "chunk_id": "41daf91e452b477ab6cd7cc212b9ddc22544cb1fbd1d632b9d7c725a6b31eba4",
+          "document_type": "runbook",
+          "position": 4,
+          "similarity_score": 0.728899,
+          "source_path": "runbooks/kubernetes-crashloopbackoff.md"
+        },
+        {
+          "chunk_id": "a286fc353590454161c9d9e2296f41a65f172c6c8d4648f260d483c01571a65e",
+          "document_type": "incident",
+          "position": 5,
+          "similarity_score": 0.715284,
+          "source_path": "incidents/inc-2025-003-search-api-502-oomkilled-crashloop.md"
+        }
+      ],
+      "status": "evaluated",
+      "usage": {
+        "input_tokens": 3070,
+        "output_tokens": 17,
+        "responses_with_usage": 1
+      }
+    }
+  ],
+  "retrieval": {
+    "embedding_dimension": 384,
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "fastembed_version": "0.9.0",
+    "implementation": "semantic_pgvector",
+    "k": 5,
+    "limit": 5
+  },
+  "run": {
+    "abort_detail": null,
+    "abort_reason": null,
+    "aborted_at_question": null,
+    "complete": true,
+    "evaluated_questions": 24,
+    "finished_at": "2026-11-02T18:48:04+00:00",
+    "mode": "live",
+    "not_evaluated_questions": 0,
+    "runs": 1,
+    "started_at": "2026-11-02T18:47:12+00:00",
+    "synthetic": false
+  },
+  "schema_version": 1,
+  "usage": {
+    "input_tokens": 69051,
+    "invocations_with_unknown_usage": 0,
+    "llm_invocations": 24,
+    "max_possible_transport_attempts": 48,
+    "note": "Token totals cover completed responses that reported usage only. Usage of failed, timed-out or retried attempts is unknown and is not estimated; such attempts may still be billed.",
+    "output_tokens": 5325,
+    "responses_with_usage": 24,
+    "transport_retries": "not observable"
+  }
+}
