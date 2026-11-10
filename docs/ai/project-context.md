@@ -4,22 +4,25 @@
 
 OpsKnowledge AI is an enterprise GenAI knowledge assistant for technical documentation, operational runbooks, incident reports, and operational knowledge.
 
-The application will eventually use Retrieval-Augmented Generation (RAG) to provide grounded answers with source citations.
+The application uses Retrieval-Augmented Generation (RAG) to provide grounded answers with source citations.
 
-## Intended capabilities
+## Capabilities
 
-Planned capabilities include:
+Implemented:
 
-- technical knowledge Q&A
-- incident search
+- technical knowledge Q&A via `POST /ask`
+- source-backed answers with grounding validation
+- insufficient-context handling
+- semantic retrieval (`POST /search`)
+- retrieval and answer evaluation (offline harness and live baseline)
+
+Planned for later milestones:
+
 - incident summarization
 - structured information extraction
-- source-backed answers
-- insufficient-context handling
-- retrieval and answer evaluation
 - LLM tracing and observability
 
-These capabilities must be implemented incrementally through GitHub issues and milestones.
+Capabilities are implemented incrementally through GitHub issues and milestones.
 
 ## Current development principle
 

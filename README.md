@@ -4,22 +4,26 @@ OpsKnowledge AI is being developed as an enterprise RAG knowledge assistant
 for technical documentation, operational runbooks, incident reports, and
 operational knowledge.
 
-The repository currently provides an operational knowledge ingestion and
-semantic retrieval foundation: documents are loaded, chunked, embedded locally,
-stored in PostgreSQL with pgvector, and searched by meaning through a
-`POST /search` API.
+The repository provides a full RAG answering pipeline: documents are loaded,
+chunked, embedded locally, stored in PostgreSQL with pgvector, and searched by
+meaning. Retrieved context is assembled, sent to a language model for structured
+generation, and grounding-validated before the answer is returned.
 
 ```text
-implemented:
 documents -> chunks -> embeddings -> pgvector -> semantic retrieval
-
-not yet implemented:
-retrieved context -> LLM -> grounded generated answer
+                                                       |
+                                              context assembly
+                                                       |
+                                              structured generation
+                                                       |
+                                              grounding validation
+                                                       |
+                                            grounded answer (or insufficient context)
 ```
 
-Search returns ranked source chunks with their metadata. It does not generate
-answers: LLM integration and RAG answer generation are planned, not yet
-implemented. See [Development status](#development-status) for details.
+`POST /search` returns ranked source chunks. `POST /ask` returns a grounded answer
+with citations, or an explicit insufficient-context response when the corpus does
+not contain the answer. See [Development status](#development-status) for details.
 
 ## Requirements
 
@@ -35,8 +39,8 @@ required Python version for the project environment.
 
 No cloud account or API key is required for ingestion, retrieval and
 `POST /search`. Embeddings are computed locally on the CPU. An Anthropic API key
-is needed only by LLM features that use the chat model factory
-(`app/llm/`).
+is needed for `POST /ask` and for the live evaluation run; both use the chat model
+factory (`app/llm/`).
 
 ## Local setup
 
@@ -58,15 +62,15 @@ required.
 cp .env.example .env
 ```
 
-| Variable                | Required for                                                      |
-| ----------------------- | ----------------------------------------------------------------- |
-| `DATABASE_URL`          | Migrations, ingestion and `POST /search`                          |
-| `TEST_DATABASE_URL`     | Database integration tests only ([Running tests](#running-tests)) |
-| `ANTHROPIC_API_KEY`     | LLM features only; read when the chat model is created            |
-| `LLM_MODEL`             | Optional, default `claude-haiku-5-5`                              |
-| `LLM_TIMEOUT_SECONDS`   | Optional, default `60`; must be positive                          |
-| `LLM_MAX_OUTPUT_TOKENS` | Optional, default `1024`; must be a positive integer              |
-| `LLM_MAX_RETRIES`       | Optional, default `2`; must be a non-negative integer             |
+| Variable                | Required for                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `DATABASE_URL`          | Migrations, ingestion, `POST /search` and `POST /ask`                         |
+| `TEST_DATABASE_URL`     | Database integration tests only ([Running tests](#running-tests))             |
+| `ANTHROPIC_API_KEY`     | `POST /ask` and live evaluation; read when the chat model is created          |
+| `LLM_MODEL`             | Optional, default `claude-haiku-5-5`                                          |
+| `LLM_TIMEOUT_SECONDS`   | Optional, default `60`; must be positive                                      |
+| `LLM_MAX_OUTPUT_TOKENS` | Optional, default `1024`; must be a positive integer                          |
+| `LLM_MAX_RETRIES`       | Optional, default `2`; must be a non-negative integer (SDK transport retries) |
 
 `.env.example` contains development-only values that match the database
 credentials in `compose.yaml`; no edit is needed for the local setup. Its
@@ -169,6 +173,7 @@ plain command only when search is not needed.
 | ------------------- | -------------------------------------------------- |
 | `GET /health`       | Health check, returns `{"status": "ok"}`           |
 | `POST /search`      | Semantic search over the ingested knowledge corpus |
+| `POST /ask`         | Grounded answer from the knowledge corpus          |
 | `GET /docs`         | Interactive API documentation (Swagger UI)         |
 | `GET /openapi.json` | OpenAPI schema                                     |
 
@@ -232,6 +237,95 @@ HTTP 422. If the database is not configured, not reachable or not migrated, the
 API responds with HTTP 500 and a generic error body. The first search request
 after startup is slower because it loads the embedding model.
 
+## Grounded answering
+
+`POST /ask` retrieves the most similar chunks, assembles them into a numbered
+context, sends the context and question to the language model for structured
+generation, validates the model's output for grounding (structural validity and
+evidence presence), and returns either an answer with citations or an explicit
+insufficient-context response.
+
+The service is started the same way as `POST /search` (see [Running the
+API](#running-the-api)) and requires both `DATABASE_URL` and `ANTHROPIC_API_KEY`
+in the environment.
+
+Request body:
+
+| Field      | Type    | Description                                                             |
+| ---------- | ------- | ----------------------------------------------------------------------- |
+| `question` | string  | Required. Natural-language question; must not be blank; max 2000 chars. |
+| `limit`    | integer | Optional. Maximum chunks retrieved, 1 to 50. Defaults to 5.            |
+
+```bash
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Why is the payments pod repeatedly restarting?",
+    "limit": 5
+  }'
+```
+
+**Answered response** (HTTP 200):
+
+```json
+{
+  "question": "Why is the payments pod repeatedly restarting?",
+  "status": "answered",
+  "reason": null,
+  "answer": "The pod is killed when it exceeds its memory limit. [1]",
+  "citations": [
+    {
+      "source_id": 1,
+      "chunk_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "document_id": "d1e2f3a4-b5c6-7890-abcd-ef1234567890",
+      "source_path": "runbooks/oom-killed-pod.md",
+      "document_type": "runbook",
+      "chunk_index": 2,
+      "evidence_quote": "container is killed when it exceeds its memory limit"
+    }
+  ]
+}
+```
+
+Each line of `answer` ends with a `[source_id]` marker referring to the
+corresponding entry in `citations`. `evidence_quote` is a contiguous substring
+of the cited source, normalized for whitespace.
+
+**Insufficient-context response** (HTTP 200):
+
+```json
+{
+  "question": "How do I rotate the database encryption key?",
+  "status": "insufficient_context",
+  "reason": "model_declined",
+  "answer": null,
+  "citations": []
+}
+```
+
+`reason` is one of `no_retrieval` (no chunks found), `empty_context` (no chunks
+fit the context budget), or `model_declined` (the model determined it lacked
+sufficient information).
+
+**Error responses:**
+
+| HTTP | `code`                 | Cause                                            |
+| ---- | ---------------------- | ------------------------------------------------ |
+| 422  | —                      | Blank question, `limit` outside 1–50             |
+| 502  | `malformed_output`     | Model output could not be parsed                 |
+| 502  | `unknown_citation`     | Model cited a source not in the retrieved context|
+| 502  | `missing_evidence`     | Evidence quote absent from source or too short   |
+| 502  | `inconsistent_response`| Structural contradiction in model output         |
+| 502  | `llm_unavailable`      | Provider or transport failure                    |
+| 503  | `llm_not_configured`   | `ANTHROPIC_API_KEY` missing or configuration invalid |
+| 500  | —                      | Unexpected internal error                        |
+
+502 and 503 error bodies have the shape `{"detail": "<fixed message>", "code": "<code>"}`.
+HTTP 422 uses FastAPI's standard validation error format (`detail` is an array).
+HTTP 500 returns `{"detail": "Internal server error"}` with no `code` field.
+See [docs/answer-generation.md](docs/answer-generation.md) for the full pipeline,
+grounding levels, evidence normalization, and known limitations.
+
 ## Evaluation
 
 An offline evaluation harness runs the questions of `data/eval/questions.jsonl`
@@ -243,9 +337,10 @@ uv run python -m app.evaluation --dry-run   # synthetic, fully offline, NOT A BA
 ```
 
 A real run (`--live`) calls the Anthropic API within explicit request, retry and
-output-token bounds and requires a separately prepared evaluation database. No
-live baseline has been performed yet. See [docs/evaluation.md](docs/evaluation.md)
-for modes, metrics, cost bounds and the live-run procedure.
+output-token bounds and requires a separately prepared evaluation database. A live
+baseline was completed on 2026-11-02 using `claude-haiku-5-5` over 24 questions.
+See [docs/evaluation.md](docs/evaluation.md) for the baseline results, modes,
+metrics, cost bounds and the live-run procedure.
 
 ## Running tests
 
@@ -306,7 +401,8 @@ pgvector service container. See
 .
 ├── app/
 │   ├── main.py              # FastAPI application and /health endpoint
-│   ├── api/                 # POST /search endpoint and dependency wiring
+│   ├── api/                 # POST /search and POST /ask endpoints, dependency wiring
+│   ├── answering/           # Context assembly, structured generation and grounding validation
 │   ├── ingestion/           # Document loading, chunking and ingestion CLI
 │   ├── embeddings/          # Local embedding service (FastEmbed)
 │   ├── evaluation/          # Offline evaluation harness and report
@@ -351,17 +447,21 @@ Currently implemented:
 - semantic retrieval over the ingested chunks
 - `POST /search` API returning ranked source chunks
 - `GET /health` endpoint
+- LLM integration (`app/llm/`) with configurable model, timeout, retries and output tokens
+- context assembly with ranking, deduplication and character budget
+- structured answer generation via the Anthropic API
+- grounding validation (structural validity and evidence-presence checks)
+- `POST /ask` API returning grounded answers with citations
+- insufficient-context responses with explicit reason codes
+- offline evaluation harness with heuristic metrics and a completed live baseline
 - automated unit and database integration tests
 - Ruff and mypy quality checks
 - GitHub Actions CI
 
-Not implemented yet and planned for later development:
+Not implemented and planned for later development:
 
-- LLM integration and answer generation
-- prompt construction
-- RAG context assembly
-- grounded answer generation
-- answer citations
-- insufficient-context answer guardrails
+- LangGraph and agent frameworks
+- MCP (Model Context Protocol) integrations
 - conversational memory
-- agents
+- LLM tracing and observability integrations
+- deployment configuration
